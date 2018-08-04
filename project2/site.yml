@@ -1,0 +1,6 @@
+---
+  - name: Playbook for installation, software, application
+    hosts: localhost
+
+    roles:
+      - nginx
