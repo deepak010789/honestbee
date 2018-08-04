@@ -2,5 +2,37 @@
   - name: Playbook for installation, software, application
     hosts: localhost
 
-    roles:
-      - nginx
+    vars_files:
+      - defaults/main.yml
+
+    tasks:
+      - name: Creating application user
+        user: name={{ user_name }} shell=/bin/bash home=/home/{{ user_name }}
+        become: yes
+      
+      - name: Enable code access for the application user
+        file: path=/home/{{ user_name }}/.ssh state=directory mode=0700 owner={{ user_name }} group={{ user_name }}
+        become: yes
+      
+      - name: Validating host key
+        shell: ssh-keyscan bitbucket.org >> /home/{{ user_name }}/.ssh/known_hosts
+        become: yes
+        become_user: "{{ user_name }}"
+
+      - name: Create site folder
+        file: path=/var/www/{{ app_name }}/current/static/  state=directory mode=755 owner={{ user_name }} group={{ user_name }}
+        become: yes
+
+      - name: Custom html file
+        copy:
+          src: files/index.html
+          dest: /var/www/{{ app_name }}/current/static/index.html
+          owner: "{{ user_name }}"
+          group: "{{ user_name }}"
+          mode: 0644
+        become: yes
+
+      - name: Run nginx role
+        include_role:
+          name: nginx
+        become: yes
