@@ -1,0 +1,88 @@
+{% if celery == 'true' %}
+upstream {{ app_name }} {
+  server unix:/var/log/{{ app_name }}/{{ app_name }}.sock;
+}
+{% endif %}
+
+server {
+    listen 80;
+    server_name _;
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log info;
+
+{% if PROJECT == 'lmap' %}
+if ($http_x_forwarded_proto != "https") {
+            rewrite ^(.*)$ https://$server_name$1 permanent;
+                   }
+
+location  ~ \.(aspx|php|jsp|cgi)$ {
+  return 410;
+}
+
+location / {
+   proxy_set_header X-Real-IP $remote_addr;
+   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+   proxy_set_header Host $http_host;
+   proxy_set_header X-NginX-Proxy true;
+   proxy_pass http://127.0.0.1:8000;
+   proxy_redirect off;
+
+}
+{% endif %}
+
+{% if PROJECT == 'defcom' %}
+if ($http_x_forwarded_proto != "https") {
+            rewrite ^(.*)$ https://$server_name$1 permanent;
+                   }
+
+location  ~ \.(aspx|php|jsp|cgi)$ {
+  return 410;
+}
+
+location / {
+    proxy_pass http://localhost:9000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_cache_bypass $http_upgrade;
+    proxy_read_timeout 400;
+
+}
+{% endif %}
+
+{% if PROJECT == 'fms' or PROJECT == 'crap' %}
+    proxy_set_header Host {{ nginx_db_url }};
+{% endif %}
+    client_max_body_size 100m;
+    proxy_read_timeout 100;
+
+{% if celery == 'true' %}
+    location / {
+      include uwsgi_params;
+      uwsgi_pass {{ app_name }};
+      uwsgi_read_timeout 600s;
+      uwsgi_send_timeout 60s;
+    }
+{% endif %}
+
+{% if gunicorn == 'true' %}
+    location ~ / {
+	error_page 503 @maintenance;
+        if (-f $document_root/maintenance.html) {
+            return 503;
+                }
+        proxy_pass http://localhost:{{ backend_port }};
+{% if PROJECT == 'fms' or PROJECT == 'crap' %}
+        proxy_set_header Host {{ nginx_db_url }};
+{% else %}
+        proxy_set_header Host $http_host;
+{% endif %}
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+   location @maintenance {
+       rewrite ^(.*)$ /maintenance.html break;
+        }
+{% endif %}
+}
