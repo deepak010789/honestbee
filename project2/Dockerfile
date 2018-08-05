@@ -17,6 +17,8 @@ ENV PATH $PATH:/usr/local/ansible
 
 EXPOSE 80
 
-WORKDIR /opt/honestbee
+WORKDIR /opt/honestbee/project2
 
 VOLUME ["/opt/honestbee"]
+CMD ["ansible-playbook", "-u", "ubuntu", "site.yml"]
+#CMD ["ab", "-n", "100", "-c", "10", "http://localhost/"]
