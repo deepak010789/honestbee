@@ -14,11 +14,6 @@
         file: path=/home/{{ user_name }}/.ssh state=directory mode=0700 owner={{ user_name }} group={{ user_name }}
         become: yes
       
-      - name: Validating host key
-        shell: ssh-keyscan bitbucket.org >> /home/{{ user_name }}/.ssh/known_hosts
-        become: yes
-        become_user: "{{ user_name }}"
-
       - name: Create site folder
         file: path=/var/www/{{ app_name }}/current/static/  state=directory mode=755 owner={{ user_name }} group={{ user_name }}
         become: yes
@@ -35,4 +30,12 @@
       - name: Run nginx role
         include_role:
           name: nginx
+        become: yes
+
+      - s3_bucket: name={{ s3_bucket }}
+        ignore_errors: True
+
+      - name: Run Fluentd role
+        include_role:
+          name: fluentd
         become: yes

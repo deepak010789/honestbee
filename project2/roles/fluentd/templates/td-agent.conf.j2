@@ -1,0 +1,29 @@
+<match **>
+  @type s3
+
+  s3_bucket "{{ s3_bucket }}"
+  s3_region ap-southeast-1
+  path logs/
+  # if you want to use ${tag} or %Y/%m/%d/ like syntax in path / s3_object_key_format,
+  # need to specify tag for ${tag} and time for %Y/%m/%d in <buffer> argument.
+  <buffer tag,time>
+    @type file
+    path /var/log/nginx/access.log
+    timekey 30 # 1 hour partition
+    timekey_wait 1m
+    timekey_use_utc true # use utc
+    chunk_limit_size 10m
+  </buffer>
+
+  time_slice_format %Y%m%d%H
+</match>
+
+<source>
+  @type tail
+  path /var/log/nginx/access.log
+  pos_file /var/log/td-agent/nginx.access_log.pos
+  <parse>
+    @type nginx
+  </parse>
+  tag s3.nginx.access
+</source>

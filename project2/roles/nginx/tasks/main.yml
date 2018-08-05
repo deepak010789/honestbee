@@ -30,6 +30,9 @@
   template: src=logratate_nginx.j2 dest=/etc/logrotate.d/nginx
   become: yes
 
+- name: Change permissions for nginx log dir 
+  file: dest=/var/log/nginx mode=775
+  become: yes
 - name: Ensure Nginx service is started
   service: name=nginx state=started enabled=yes
   become: yes

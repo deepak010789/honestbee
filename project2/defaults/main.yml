@@ -1,3 +1,4 @@
 ---
 user_name: ubuntu
 app_name: honestbee
+s3_bucket: delhivery-build-artifacts 

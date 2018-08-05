@@ -1,0 +1,20 @@
+---
+
+- name: Install Fluentd (td-agent)
+  shell: curl -L https://toolbelt.treasuredata.com/sh/install-ubuntu-xenial-td-agent3.sh | sh
+  become: yes
+
+- name: Copy td-agent.conf
+  template: src=td-agent.conf.j2 dest=/etc/td-agent/td-agent.conf
+  become: yes
+
+- name: Adding user td-agent to adm group
+  user: name=td-agent groups=adm append=yes
+
+- name: Ensure Fluentd (td-agent) service is started
+  service: name=td-agent state=started enabled=yes
+  become: yes
+
+- name: Install plugin fluent-plugin-s3
+  shell: td-agent-gem install fluent-plugin-s3
+  become: yes
